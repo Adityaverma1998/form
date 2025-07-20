@@ -8,6 +8,7 @@ class CommonResponse {
   final String? comboValue;
   final String? title;
   final int? languageId;
+  final int? parentId;   // <-- Added parentId
 
   const CommonResponse({
     this.id,
@@ -17,9 +18,9 @@ class CommonResponse {
     this.comboValue,
     this.title,
     this.languageId,
+    this.parentId,
   });
 
-  /// copyWith method
   CommonResponse copyWith({
     int? id,
     int? serialNo,
@@ -28,6 +29,7 @@ class CommonResponse {
     String? comboValue,
     String? title,
     int? languageId,
+    int? parentId,
   }) {
     return CommonResponse(
       id: id ?? this.id,
@@ -37,10 +39,10 @@ class CommonResponse {
       comboValue: comboValue ?? this.comboValue,
       title: title ?? this.title,
       languageId: languageId ?? this.languageId,
+      parentId: parentId ?? this.parentId,
     );
   }
 
-  /// From Map
   factory CommonResponse.fromMap(Map<String, dynamic> map) {
     return CommonResponse(
       id: map['id'],
@@ -50,10 +52,10 @@ class CommonResponse {
       comboValue: map['combo_value'],
       title: map['title'],
       languageId: map['language_id'],
+      parentId: map['parent_id'],
     );
   }
 
-  /// To Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -63,17 +65,17 @@ class CommonResponse {
       'combo_value': comboValue,
       'title': title,
       'language_id': languageId,
+      'parent_id': parentId,
     };
   }
 
-  /// From JSON
-  factory CommonResponse.fromJson(String source) => CommonResponse.fromMap(jsonDecode(source));
+  factory CommonResponse.fromJson(String source) =>
+      CommonResponse.fromMap(jsonDecode(source));
 
-  /// To JSON
   String toJson() => jsonEncode(toMap());
 
   @override
   String toString() {
-    return 'CommonResponse(id: $id, serialNo: $serialNo, comboId: $comboId, flag: $flag, comboValue: $comboValue, title: $title, languageId: $languageId)';
+    return 'CommonResponse(id: $id, serialNo: $serialNo, comboId: $comboId, flag: $flag, comboValue: $comboValue, title: $title, languageId: $languageId, parentId: $parentId)';
   }
 }

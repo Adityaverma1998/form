@@ -3,96 +3,121 @@ import 'package:basic_form/presentation/model/common_response.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class HomeScreen extends StatefulWidget {
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  CommonResponse? selectedState;
-  CommonResponse? selectedDistrict;
-
-  List<CommonResponse> statesList = [];
-  List<CommonResponse> districtList = [];
-
-  @override
-  void initState() {
-    super.initState();
-    context.read<AddFormBloc>().add(GetStateCommonList());
-    context.read<AddFormBloc>().add(GetDistrictCommonList());
-  }
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('User Form with States & Districts')),
+      appBar: AppBar(title: Text('User Form')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: BlocConsumer<AddFormBloc, AddFormDataState>(
-          listener: (context, state) {
-            if (state is StateListLoaded) {
-              setState(() {
-                statesList = state.states;
-              });
-            } else if (state is DistrictListLoaded) {
-              setState(() {
-                districtList = state.districts;
-              });
-            } else if (state is AddFormDataError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error: ${state.message}')),
+        child: BlocBuilder<AddFormBloc, AddFormDataState>(
+          builder: (context, state) {
+            if (state is AddFormDataInitialState) {
+              context.read<AddFormBloc>().add(LoadInitialDataEvent());
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (state is AddFormDataLoading) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (state is StateAndDistrictsLoaded) {
+              print("call me ");
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    /// State Dropdown
+                    DropdownButtonFormField<CommonResponse>(
+                      value: state.selectedState,
+                      hint: Text('Select State'),
+                      items: state.states.map((stateItem) {
+                        return DropdownMenuItem<CommonResponse>(
+                          value: stateItem,
+                          child: Text(stateItem.title ?? ''),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          context.read<AddFormBloc>().add(SelectStateEvent(value));
+                        }
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'State',
+                      ),
+                    ),
+                    SizedBox(height: 16),
+
+                    /// District Dropdown
+                    DropdownButtonFormField<CommonResponse>(
+                      value: state.selectedDistrict,
+                      hint: Text('Select District'),
+                      items: state.districts.map((district) {
+                        return DropdownMenuItem<CommonResponse>(
+                          value: district,
+                          child: Text(district.title ?? ''),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          context.read<AddFormBloc>().add(SelectDistrictEvent(value));
+                        }
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'District',
+                      ),
+                    ),
+                    SizedBox(height: 16),
+
+                    /// Gender Radio Buttons
+                    Text('Select Gender'),
+                    ...state.genders.map((gender) {
+                      return RadioListTile<CommonResponse>(
+                        title: Text(gender.title ?? ''),
+                        value: gender,
+                        groupValue: state.selectedGender,
+                        onChanged: (value) {
+                          if (value != null) {
+                            context.read<AddFormBloc>().add(SelectGenderEvent(value));
+                          }
+                        },
+                      );
+                    }).toList(),
+
+                    SizedBox(height: 16),
+
+                    /// Subjects Checkboxes
+                    Text('Select Subjects'),
+                    ...state.courses.map((subject) {
+                      final isSelected = state.selectedSubjects.contains(subject);
+                      return CheckboxListTile(
+                        title: Text(subject.title ?? ''),
+                        value: isSelected,
+                        onChanged: (checked) {
+                          final updatedSubjects = List<CommonResponse>.from(state.selectedSubjects);
+                          if (checked == true) {
+                            updatedSubjects.add(subject);
+                          } else {
+                            updatedSubjects.removeWhere((s) => s.id == subject.id);
+                          }
+                          context.read<AddFormBloc>().add(SelectSubjectsEvent(updatedSubjects));
+                        },
+                      );
+                    }).toList(),
+
+                  ],
+                ),
               );
             }
-          },
-          builder: (context, state) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (state is AddFormDataLoading) ...[
-                  Center(child: CircularProgressIndicator()),
-                ],
-                DropdownButtonFormField<CommonResponse>(
-                  value: selectedState,
-                  hint: Text('Select State'),
-                  items: statesList.map((CommonResponse stateItem) {
-                    return DropdownMenuItem<CommonResponse>(
-                      value: stateItem,
-                      child: Text(stateItem.title ?? ''),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedState = value;
-                      selectedDistrict = null;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'State',
-                  ),
-                ),
-                SizedBox(height: 16),
-                DropdownButtonFormField<CommonResponse>(
-                  value: selectedDistrict,
-                  hint: Text('Select District'),
-                  items: districtList.map((CommonResponse district) {
-                    return DropdownMenuItem<CommonResponse>(
-                      value: district,
-                      child: Text(district.title ?? ''),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedDistrict = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'District',
-                  ),
-                ),
-              ],
-            );
+
+            if (state is AddFormDataError) {
+              return Center(child: Text('Error: ${state.message}'));
+            }
+
+            return Center(child: Text('Initializing...'));
           },
         ),
       ),
